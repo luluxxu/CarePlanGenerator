@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Care Plan Result</title>
+    <style>
+        body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+        h1 { font-size: 1.5rem; }
+        .meta { background: #f0f4f8; padding: 0.75rem 1rem; border-radius: 4px; font-size: 0.9rem; }
+        pre { background: #fafafa; padding: 1rem 1.25rem; white-space: pre-wrap; word-wrap: break-word; border: 1px solid #e5e5e5; border-radius: 4px; line-height: 1.5; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9rem; }
+        a { color: #2563eb; }
+    </style>
+</head>
+<body>
+    <h1>Care Plan Generated ✅</h1>
+    <div class="meta">
+        <strong>Patient:</strong> {{ data.first_name }} {{ data.last_name }} (MRN: {{ data.mrn }})<br>
+        <strong>Medication:</strong> {{ data.medication }}<br>
+        <strong>Care Plan ID:</strong> <code>{{ care_plan_id }}</code> (stored in process memory only)
+    </div>
+    <pre>{{ care_plan }}</pre>
+    <p><a href="/">← Generate another</a></p>
+</body>
+</html>
