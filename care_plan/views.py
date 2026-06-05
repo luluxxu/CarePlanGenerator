@@ -5,10 +5,14 @@
 那时再去做分层重构，体感会比一上来就分层要深刻得多。
 """
 
+import logging
 import os
 import uuid
 from django.shortcuts import render
+from django.http import HttpResponse, Http404
 from anthropic import Anthropic
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # In-memory "数据库"。进程一重启就全没了。
@@ -57,6 +61,8 @@ def generate(request):
     注意这里没有任何 validation、没有 try/except、没有重复检测、
     没有 warning、没有 auth。错了就直接 500 给你看堆栈。
     """
+    logger.info("收到请求  method=%s  path=%s", request.method, request.path)
+
     # 1. 从表单拿数据（POST 里啥都没有时也不报错，给空字符串）
     data = {
         "first_name": request.POST.get("first_name", ""),
@@ -73,15 +79,15 @@ def generate(request):
 
     # 2. 拼 prompt
     prompt = PROMPT_TEMPLATE.format(**data)
-
     # 3. 同步调 LLM —— 用户在这里干等
+    logger.info("开始调用 LLM  model=%s  prompt_len=%d", MODEL, len(prompt))
     response = _client.messages.create(
         model=MODEL,
         max_tokens=2000,
         messages=[{"role": "user", "content": prompt}],
     )
     care_plan_text = response.content[0].text
-
+    logger.info("LLM 返回  text_len=%d  usage=%s", len(care_plan_text), response.usage)
     # 4. 存内存
     care_plan_id = str(uuid.uuid4())
     CARE_PLANS[care_plan_id] = {
@@ -99,3 +105,29 @@ def generate(request):
             "data": data,
         },
     )
+
+#   空 2：view 函数签名——你来写。
+
+#   之前的 view 都是 def xxx(request): 一个参数。这次 Django 会把捕获到的 care_plan_id
+#   作为第二个参数传进来，所以签名应该是 def 函数名(???, ???):。两个问号你来填。
+
+#   空 3：函数体——先就写一行，把这个 id 打到日志里，验证"Django 真的把 id 传进来了"：
+
+#   def 你起的名字(...):
+#       logger.info("...??? = %s", ???)
+#       return HttpResponse("got it: " + care_plan_id)   # 临时返回，等下再换
+
+#   （注意要 from django.http import HttpResponse——你 urls.py 里已经 import 过，现在 views.py 也需要。）
+
+
+def detail(request, care_plan_id):
+    logger.info("care_plan_id = %s", care_plan_id)
+    care_plan = CARE_PLANS.get(care_plan_id)      # 选第二种 .get(无默认值)
+    if care_plan is None:
+        logger.warning("care plan not found, id=%s", care_plan_id)
+        raise Http404("care plan not found")
+    logger.info("care plan found, id=%s", care_plan_id)
+    return HttpResponse(
+        "got" + care_plan["patient_data"]["first_name"] 
+        + " " + care_plan["patient_data"]["last_name"]
+        + "care plan:" + care_plan["care_plan"])
