@@ -1,4 +1,23 @@
 services:
+  db:
+    image: postgres:16
+    environment:
+      - POSTGRES_DB=careplan
+      - POSTGRES_USER=careplan
+      - POSTGRES_PASSWORD=careplan
+    ports:
+      # 把容器里的 5432 映射到宿主机 5432，这样你在本机直接跑 manage.py 也能连。
+      - "5432:5432"
+    volumes:
+      # 命名 volume：数据存在 Docker 管理的磁盘里，容器删了数据还在（这就是“持久化”）。
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # web 启动太快、db 还没准备好接受连接会报错。用 healthcheck 让 web 等 db 真正 ready。
+      test: ["CMD-SHELL", "pg_isready -U careplan"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   web:
     build: .
     ports:
@@ -7,3 +26,16 @@ services:
       - .:/app
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # 容器内连库时 host 是服务名 db（compose 内置 DNS），不是 localhost。
+      - POSTGRES_DB=careplan
+      - POSTGRES_USER=careplan
+      - POSTGRES_PASSWORD=careplan
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+    depends_on:
+      db:
+        # 等 db healthcheck 通过再启动 web。
+        condition: service_healthy
+
+volumes:
+  pgdata:

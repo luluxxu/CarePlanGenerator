@@ -7,18 +7,13 @@
 
 import logging
 import os
-import uuid
-from django.shortcuts import render
-from django.http import HttpResponse, Http404
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse
 from anthropic import Anthropic
 
-logger = logging.getLogger(__name__)
+from .models import CarePlan
 
-# ---------------------------------------------------------------------------
-# In-memory "数据库"。进程一重启就全没了。
-# 后面切换到 Postgres / SQLite 时，这个字典是替换目标。
-# ---------------------------------------------------------------------------
-CARE_PLANS: dict[str, dict] = {}
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # LLM client。同步调用，请求会阻塞 worker 几十秒。
@@ -88,12 +83,12 @@ def generate(request):
     )
     care_plan_text = response.content[0].text
     logger.info("LLM 返回  text_len=%d  usage=%s", len(care_plan_text), response.usage)
-    # 4. 存内存
-    care_plan_id = str(uuid.uuid4())
-    CARE_PLANS[care_plan_id] = {
-        "patient_data": data,
-        "care_plan": care_plan_text,
-    }
+    # 4. 存数据库。id 由模型的 default=uuid.uuid4 生成，create 后从对象上取。
+    plan = CarePlan.objects.create(
+        patient_data=data,
+        care_plan=care_plan_text,
+    )
+    care_plan_id = str(plan.id)
 
     # 5. 渲染结果
     return render(
@@ -106,28 +101,16 @@ def generate(request):
         },
     )
 
-#   空 2：view 函数签名——你来写。
-
-#   之前的 view 都是 def xxx(request): 一个参数。这次 Django 会把捕获到的 care_plan_id
-#   作为第二个参数传进来，所以签名应该是 def 函数名(???, ???):。两个问号你来填。
-
-#   空 3：函数体——先就写一行，把这个 id 打到日志里，验证"Django 真的把 id 传进来了"：
-
-#   def 你起的名字(...):
-#       logger.info("...??? = %s", ???)
-#       return HttpResponse("got it: " + care_plan_id)   # 临时返回，等下再换
-
-#   （注意要 from django.http import HttpResponse——你 urls.py 里已经 import 过，现在 views.py 也需要。）
-
-
 def detail(request, care_plan_id):
+    """GET /<id>/ -> 按 id 从数据库取一条 care plan
+
+    get_object_or_404 找不到时自动抛 Http404（内部会处理 id 格式不合法的情况），
+    所以不用自己写 .get() + if None 那一套。
+    """
     logger.info("care_plan_id = %s", care_plan_id)
-    care_plan = CARE_PLANS.get(care_plan_id)      # 选第二种 .get(无默认值)
-    if care_plan is None:
-        logger.warning("care plan not found, id=%s", care_plan_id)
-        raise Http404("care plan not found")
+    plan = get_object_or_404(CarePlan, pk=care_plan_id)
     logger.info("care plan found, id=%s", care_plan_id)
     return HttpResponse(
-        "got" + care_plan["patient_data"]["first_name"] 
-        + " " + care_plan["patient_data"]["last_name"]
-        + "care plan:" + care_plan["care_plan"])
+        "got" + plan.patient_data["first_name"]
+        + " " + plan.patient_data["last_name"]
+        + "care plan:" + plan.care_plan)
