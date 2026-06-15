@@ -19,18 +19,20 @@
         <label>Patient First Name <input name="first_name" value="Jane"></label>
         <label>Patient Last Name <input name="last_name" value="Doe"></label>
         <label>MRN <input name="mrn" value="00012345"></label>
-        <label>Primary Diagnosis (ICD-10) <input name="primary_diagnosis" value="G70.00"></label>
+        <label>Date of Birth <input name="dob" type="date" value="1979-03-15"></label>
+        <label>Diagnosis (ICD-10) <input name="diagnosis" value="G70.00"></label>
         <label>Medication <input name="medication" value="IVIG"></label>
-        <label>Additional Diagnoses <input name="additional_diagnoses" value="I10, K21.9"></label>
-        <label>Medication History
-            <textarea name="medication_history" rows="3">Pyridostigmine 60 mg PO q6h PRN
+        <label>Referring Provider First Name <input name="provider_first_name" value="John"></label>
+        <label>Referring Provider Last Name <input name="provider_last_name" value="Smith"></label>
+        <label>Referring Provider NPI <input name="provider_npi" value="1234567890"></label>
+        <label>Patient Records <span class="hint">病历 / 用药史 / 其它自由文本</span>
+            <textarea name="records" rows="6">Age 46 Female, 72 kg. No known drug allergies. Progressive proximal muscle weakness and ptosis over 2 weeks. Neurology recommends IVIG for rapid symptomatic control.
+
+Additional diagnoses: I10, K21.9
+Medication history:
+Pyridostigmine 60 mg PO q6h PRN
 Prednisone 10 mg PO daily
 Lisinopril 10 mg PO daily</textarea>
-        </label>
-        <label>Referring Provider Name <input name="provider_name" value="Dr. Smith"></label>
-        <label>Referring Provider NPI <input name="provider_npi" value="1234567890"></label>
-        <label>Patient Records
-            <textarea name="patient_records" rows="6">Age 46 Female, 72 kg. No known drug allergies. Progressive proximal muscle weakness and ptosis over 2 weeks. Neurology recommends IVIG for rapid symptomatic control.</textarea>
         </label>
         <button type="submit">Generate Care Plan</button>
         <p class="hint">⚠️ 同步调用 LLM，点击后请耐心等 15-60 秒，浏览器会一直转圈。</p>

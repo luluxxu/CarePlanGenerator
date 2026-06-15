@@ -14,9 +14,11 @@
 <body>
     <h1>Care Plan Generated ✅</h1>
     <div class="meta">
-        <strong>Patient:</strong> {{ data.first_name }} {{ data.last_name }} (MRN: {{ data.mrn }})<br>
-        <strong>Medication:</strong> {{ data.medication }}<br>
-        <strong>Care Plan ID:</strong> <code>{{ care_plan_id }}</code> (stored in process memory only)
+        <strong>Patient:</strong> {{ patient.first_name }} {{ patient.last_name }} (MRN: {{ patient.mrn }})<br>
+        <strong>Medication:</strong> {{ order.medication }}<br>
+        <strong>Diagnosis:</strong> {{ order.diagnosis }}<br>
+        <strong>Order ID:</strong> <code>{{ order.id }}</code><br>
+        <strong>Care Plan ID:</strong> <code>{{ care_plan_id }}</code>
     </div>
     <pre>{{ care_plan }}</pre>
     <p><a href="/">← Generate another</a></p>
